@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -12,6 +12,8 @@ from iaqualink.device import (
     AqualinkThermostat,
     AqualinkToggle,
 )
+
+from .base_test_device import TestBaseThermostat
 
 
 class TestAqualinkDevice(unittest.IsolatedAsyncioTestCase):
@@ -128,40 +130,93 @@ class TestAqualinkLight(unittest.IsolatedAsyncioTestCase):
                 await self.obj.set_effect_by_id(0)
 
 
-class TestAqualinkThermostat(unittest.IsolatedAsyncioTestCase):
+class TestAqualinkThermostat(TestBaseThermostat):
     def setUp(self) -> None:
-        system = MagicMock()
+        system = AsyncMock()
         data = {}
-        self.obj = AqualinkThermostat(system, data)
+        self.sut = AqualinkThermostat(system, data)
+        self.sut_class = AqualinkThermostat
 
-    def test_is_on_not_implemented(self):
+    async def test_property_is_on(self):
         with pytest.raises(NotImplementedError):
-            self.obj.is_on
+            self.sut.is_on
 
-    async def test_toggle_not_implemented(self):
+    async def test_property_name(self):
         with pytest.raises(NotImplementedError):
-            await self.obj.toggle()
+            self.sut.name
 
-    async def test_unit_not_implemented(self):
+    async def test_property_label(self):
         with pytest.raises(NotImplementedError):
-            self.obj.unit
+            self.sut.label
 
-    def test_current_temperature_not_implemented(self):
+    async def test_property_state(self):
         with pytest.raises(NotImplementedError):
-            self.obj.current_temperature
+            self.sut.state
 
-    def test_target_temperature_not_implemented(self):
+    async def test_property_unit_f(self):
         with pytest.raises(NotImplementedError):
-            self.obj.target_temperature
+            self.sut.unit
 
-    async def test_max_temperature_not_implemented(self):
+    async def test_property_unit_c(self):
         with pytest.raises(NotImplementedError):
-            self.obj.max_temperature
+            self.sut.unit
 
-    async def test_min_temperature_not_implemented(self):
+    async def test_property_min_temperature_f(self):
         with pytest.raises(NotImplementedError):
-            self.obj.min_temperature
+            self.sut.min_temperature
 
-    async def test_set_temperature_not_implemented(self):
+    async def test_property_min_temperature_c(self):
         with pytest.raises(NotImplementedError):
-            await self.obj.set_temperature(72)
+            self.sut.min_temperature
+
+    async def test_property_max_temperature_f(self):
+        with pytest.raises(NotImplementedError):
+            self.sut.max_temperature
+
+    async def test_property_max_temperature_c(self):
+        with pytest.raises(NotImplementedError):
+            self.sut.max_temperature
+
+    async def test_property_current_temperature(self):
+        with pytest.raises(NotImplementedError):
+            self.sut.current_temperature
+
+    async def test_property_target_temperature(self):
+        with pytest.raises(NotImplementedError):
+            self.sut.target_temperature
+
+    async def test_turn_on(self):
+        with pytest.raises(NotImplementedError):
+            return await super().test_turn_on()
+
+    async def test_turn_on_noop(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_turn_on_noop()
+
+    async def test_turn_off(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_turn_off()
+
+    async def test_turn_off_noop(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_turn_off_noop()
+
+    async def test_toggle(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_toggle()
+
+    async def test_set_temperature_86f(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_set_temperature_86f()
+
+    async def test_set_temperature_30c(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_set_temperature_30c()
+
+    async def test_set_temperature_invalid_400f(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_set_temperature_invalid_400f()
+
+    async def test_set_temperature_invalid_204c(self):
+        with pytest.raises(NotImplementedError):
+            await super().test_set_temperature_invalid_204c()

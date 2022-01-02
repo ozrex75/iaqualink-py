@@ -156,7 +156,7 @@ class IaquaThermostat(IaquaDevice, AqualinkThermostat):
         if temperature not in range(low, high + 1):
             msg = f"{temperature}{unit} isn't a valid temperature"
             msg += f" ({low}-{high}{unit})."
-            raise Exception(msg)
+            raise AqualinkInvalidParameterException(msg)
 
         data = {self._temperature: str(temperature)}
         await self.system.set_temps(data)

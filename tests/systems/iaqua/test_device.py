@@ -6,7 +6,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from iaqualink.exception import AqualinkInvalidParameterException
 from iaqualink.systems.iaqua.device import (
+    IAQUA_TEMP_CELSIUS_HIGH,
+    IAQUA_TEMP_CELSIUS_LOW,
+    IAQUA_TEMP_FAHRENHEIT_HIGH,
+    IAQUA_TEMP_FAHRENHEIT_LOW,
     IaquaColorLight,
     IaquaDevice,
     IaquaDimmableLight,
@@ -16,6 +21,7 @@ from iaqualink.systems.iaqua.device import (
     IaquaThermostat,
 )
 
+from ...base_test_device import TestBaseThermostat
 from ...common import async_noop
 
 
@@ -216,86 +222,110 @@ class TestIaquaColorLight(unittest.IsolatedAsyncioTestCase):
             await self.obj.set_effect_by_name("bad effect name")
 
 
-class TestIaquaThermostat(unittest.IsolatedAsyncioTestCase):
+class TestIaquaThermostat(TestBaseThermostat):
     def setUp(self) -> None:
-        self.system = system = MagicMock()
+        self.system = system = AsyncMock()
         self.system.temp_unit = "F"
-        system.set_temps = async_noop
-        pool_set_point = {"name": "pool_set_point", "state": "76"}
+        pool_set_point = {"name": "pool_set_point", "state": "86"}
         self.pool_set_point = IaquaThermostat(system, pool_set_point)
         pool_temp = {"name": "pool_temp", "state": "65"}
         self.pool_temp = IaquaSensor(system, pool_temp)
         pool_heater = {"name": "pool_heater", "state": "0"}
         self.pool_heater = IaquaHeater(system, pool_heater)
-        self.pool_heater.toggle = AsyncMock()
         spa_set_point = {"name": "spa_set_point", "state": "102"}
-        self.spa_set_point = IaquaThermostat(system, spa_set_point)
+        self.spa_set_point = IaquaDevice.from_data(system, spa_set_point)
         devices = [
             self.pool_set_point,
             self.pool_heater,
             self.pool_temp,
-            self.spa_set_point,
         ]
         system.devices = {x.name: x for x in devices}
 
+        self.sut = self.pool_set_point
+        self.sut_class = IaquaThermostat
+
+    def test_property_is_on(self):
+        assert self.pool_set_point.is_on is False
+
+    def test_property_label(self):
+        assert self.sut.label == "Pool Set Point"
+
+    def test_property_name(self):
+        assert self.sut.name == "pool_set_point"
+
+    def test_property_state(self):
+        assert self.sut.state == "86"
+
+    def test_property_unit_f(self):
+        self.sut.system.temp_unit = "F"
+        super().test_property_unit_f()
+
+    def test_property_unit_c(self):
+        self.sut.system.temp_unit = "C"
+        super().test_property_unit_c()
+
+    def test_property_min_temperature_f(self):
+        self.sut.system.temp_unit = "F"
+        assert self.sut.min_temperature == IAQUA_TEMP_FAHRENHEIT_LOW
+
+    def test_property_min_temperature_c(self):
+        self.sut.system.temp_unit = "C"
+        assert self.sut.min_temperature == IAQUA_TEMP_CELSIUS_LOW
+
+    def test_property_max_temperature_f(self):
+        self.sut.system.temp_unit = "F"
+        assert self.sut.max_temperature == IAQUA_TEMP_FAHRENHEIT_HIGH
+
+    def test_property_max_temperature_c(self):
+        self.sut.system.temp_unit = "C"
+        assert self.sut.max_temperature == IAQUA_TEMP_CELSIUS_HIGH
+
+    def test_property_current_temperature(self):
+        assert self.sut.current_temperature == "65"
+
+    def test_property_target_temperature(self):
+        assert self.sut.target_temperature == "86"
+
+    async def test_turn_on(self):
+        self.pool_heater.data["state"] = "0"
+        await super().test_turn_on()
+
+    async def test_turn_on_noop(self):
+        self.pool_heater.data["state"] = "1"
+        await super().test_turn_on_noop()
+
+    async def test_turn_off(self):
+        self.pool_heater.data["state"] = "1"
+        await super().test_turn_off()
+
+    async def test_turn_off_noop(self):
+        self.pool_heater.data["state"] = "0"
+        await super().test_turn_off_noop()
+
+    async def test_toggle(self):
+        await super().test_toggle()
+        self.sut.system.set_heater.assert_called_with("set_pool_heater")
+
+    async def test_set_temperature_86f(self):
+        await super().test_set_temperature_86f()
+        self.sut.system.set_temps.assert_called_with({"temp1": "86"})
+
+    async def test_set_temperature_30c(self):
+        await super().test_set_temperature_30c()
+        self.sut.system.set_temps.assert_called_with({"temp1": "30"})
+
+    async def test_set_temperature_invalid_400f(self):
+        with pytest.raises(AqualinkInvalidParameterException):
+            await super().test_set_temperature_invalid_400f()
+
+    async def test_set_temperature_invalid_204c(self):
+        with pytest.raises(AqualinkInvalidParameterException):
+            await super().test_set_temperature_invalid_204c()
+
     async def test_temp_name_spa_present(self):
+        self.sut.system.devices["spa_set_point"] = self.spa_set_point
         assert self.spa_set_point._temperature == "temp1"
         assert self.pool_set_point._temperature == "temp2"
 
     async def test_temp_name_no_spa(self):
-        spa_set_point = self.system.devices.pop("spa_set_point")
         assert self.pool_set_point._temperature == "temp1"
-        self.system.devices["spa_set_point"] = spa_set_point
-
-    def test_current_temperature(self):
-        assert self.pool_set_point.current_temperature == "65"
-
-    def test_target_temperature(self):
-        assert self.pool_set_point.target_temperature == "76"
-
-    def test_is_on(self):
-        assert self.pool_set_point.is_on is False
-
-    async def test_turn_on(self):
-        self.pool_heater.toggle.reset_mock()
-        self.pool_heater.data["state"] = "0"
-        await self.pool_set_point.turn_on()
-        self.pool_heater.toggle.assert_called_once()
-
-    async def test_turn_on_noop(self):
-        self.pool_heater.toggle.reset_mock()
-        self.pool_heater.data["state"] = "1"
-        await self.pool_set_point.turn_on()
-        self.pool_heater.toggle.assert_not_called()
-
-    async def test_turn_off(self):
-        self.pool_heater.toggle.reset_mock()
-        self.pool_heater.data["state"] = "1"
-        await self.pool_set_point.turn_off()
-        self.pool_heater.toggle.assert_called_once()
-
-    async def test_turn_off_noop(self):
-        self.pool_heater.toggle.reset_mock()
-        self.pool_heater.data["state"] = "0"
-        await self.pool_set_point.turn_off()
-        self.pool_heater.toggle.assert_not_called()
-
-    async def test_bad_temperature(self):
-        with pytest.raises(Exception):
-            await self.pool_set_point.set_temperature(18)
-
-    async def test_bad_temperature_2(self):
-        self.system.temp_unit = "C"
-        with pytest.raises(Exception):
-            await self.pool_set_point.set_temperature(72)
-
-    async def test_set_temperature(self):
-        self.pool_set_point.system.set_temps.reset_mock()
-        await self.pool_set_point.set_temperature(72)
-        self.pool_set_point.system.set_temps.assert_called_once()
-
-    async def test_set_temperature_2(self):
-        self.pool_set_point.system.set_temps.reset_mock()
-        self.system.temp_unit = "C"
-        await self.pool_set_point.set_temperature(18)
-        self.pool_set_point.system.set_temps.assert_called_once()
