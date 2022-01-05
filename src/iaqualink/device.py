@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
+from iaqualink.exception import AqualinkOperationNotSupportedException
 from iaqualink.typing import DeviceData
 
 LOGGER = logging.getLogger("iaqualink")
@@ -105,7 +106,7 @@ class AqualinkLight(AqualinkDevice):
     async def set_brightness(self, _: int) -> None:
         if self.supports_brightness is True:
             raise NotImplementedError
-        return None
+        raise AqualinkOperationNotSupportedException
 
     @property
     def effect(self) -> Optional[str]:
@@ -118,12 +119,12 @@ class AqualinkLight(AqualinkDevice):
     async def set_effect_by_name(self, _: str) -> None:
         if self.supports_effect is True:
             raise NotImplementedError
-        return None
+        raise AqualinkOperationNotSupportedException
 
     async def set_effect_by_id(self, _: int) -> None:
         if self.supports_effect is True:
             raise NotImplementedError
-        return None
+        raise AqualinkOperationNotSupportedException
 
 
 class AqualinkThermostat(AqualinkToggle, AqualinkDevice):

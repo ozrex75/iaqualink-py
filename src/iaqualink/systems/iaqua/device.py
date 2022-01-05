@@ -228,7 +228,7 @@ class IaquaDimmableLight(IaquaDevice, AqualinkLight):
         if brightness not in [0, 25, 50, 75, 100]:
             msg = f"{brightness}% isn't a valid percentage."
             msg += " Only use 25% increments."
-            raise Exception(msg)
+            raise AqualinkInvalidParameterException(msg)
 
         data = {"aux": self.data["aux"], "light": f"{brightness}"}
         await self.system.set_light(data)
@@ -273,12 +273,18 @@ class IaquaColorLight(IaquaDevice, AqualinkLight):
     async def set_effect_by_name(self, effect: str) -> None:
         try:
             effect_id = self.supported_effects[effect]
-        except IndexError as e:
+        except KeyError as e:
             msg = f"{repr(effect)} isn't a valid effect."
             raise AqualinkInvalidParameterException(msg) from e
         await self.set_effect_by_id(effect_id)
 
     async def set_effect_by_id(self, effect_id: int) -> None:
+        try:
+            _ = list(self.supported_effects.values()).index(effect_id)
+        except ValueError as e:
+            msg = f"{repr(effect_id)} isn't a valid effect."
+            raise AqualinkInvalidParameterException(msg) from e
+
         data = {
             "aux": self.data["aux"],
             "light": str(effect_id),
