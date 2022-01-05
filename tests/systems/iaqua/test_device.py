@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import copy
-
-# from unittest.case import skip
+from typing import cast
 from unittest.mock import patch
 
 from iaqualink.systems.iaqua.device import (
@@ -242,10 +241,10 @@ class TestIaquaLightToggle(TestBaseLight, TestIaquaDevice):
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_off_noop()
 
-    async def test_property_brightness(self) -> None:
+    def test_property_brightness(self) -> None:
         assert self.sut.brightness is None
 
-    async def test_property_effect(self) -> None:
+    def test_property_effect(self) -> None:
         assert self.sut.effect is None
 
 
@@ -416,12 +415,14 @@ class TestIaquaColorLight(TestBaseLight, TestIaquaDevice):
             await super().test_set_effect_by_name_invalid_amaranth()
 
 
-class TestIaquaThermostat(TestBaseThermostat, TestIaquaDevice):
+class TestIaquaThermostat(TestIaquaDevice, TestBaseThermostat):
     def setUp(self) -> None:
         super().setUp()
 
         pool_set_point = {"name": "pool_set_point", "state": "86"}
-        self.pool_set_point = IaquaDevice.from_data(self.system, pool_set_point)
+        self.pool_set_point = cast(
+            IaquaThermostat, IaquaDevice.from_data(self.system, pool_set_point)
+        )
 
         pool_temp = {"name": "pool_temp", "state": "65"}
         self.pool_temp = IaquaDevice.from_data(self.system, pool_temp)
@@ -430,7 +431,9 @@ class TestIaquaThermostat(TestBaseThermostat, TestIaquaDevice):
         self.pool_heater = IaquaDevice.from_data(self.system, pool_heater)
 
         spa_set_point = {"name": "spa_set_point", "state": "102"}
-        self.spa_set_point = IaquaDevice.from_data(self.system, spa_set_point)
+        self.spa_set_point = cast(
+            IaquaThermostat, IaquaDevice.from_data(self.system, spa_set_point)
+        )
 
         devices = [
             self.pool_set_point,

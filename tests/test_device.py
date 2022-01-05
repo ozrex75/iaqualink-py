@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Dict
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
@@ -29,7 +30,7 @@ class TestAqualinkDevice(TestBaseDevice):
         data = {"foo": "bar"}
         self.sut = AqualinkDevice(system, data)
 
-    async def test_repr(self):
+    async def test_repr(self) -> None:
         assert (
             repr(self.sut)
             == f"{self.sut.__class__.__name__}(data={repr(self.sut.data)})"
@@ -59,14 +60,14 @@ class TestAqualinkDevice(TestBaseDevice):
 class TestAqualinkSensor(TestBaseSensor, TestAqualinkDevice):
     def setUp(self) -> None:
         system = MagicMock()
-        data = {}
+        data: Dict[str, str] = {}
         self.sut = AqualinkSensor(system, data)
 
 
 class TestAqualinkBinarySensor(TestBaseBinarySensor, TestAqualinkSensor):
     def setUp(self) -> None:
         system = MagicMock()
-        data = {}
+        data: Dict[str, str] = {}
         self.sut = AqualinkBinarySensor(system, data)
 
     def test_property_is_on_true(self) -> None:
@@ -81,7 +82,7 @@ class TestAqualinkBinarySensor(TestBaseBinarySensor, TestAqualinkSensor):
 class TestAqualinkToggle(TestBaseToggle, TestAqualinkDevice):
     def setUp(self) -> None:
         system = MagicMock()
-        data = {}
+        data: Dict[str, str] = {}
         self.sut = AqualinkToggle(system, data)
 
     def test_property_is_on_true(self) -> None:
@@ -112,7 +113,7 @@ class TestAqualinkToggle(TestBaseToggle, TestAqualinkDevice):
 class TestAqualinkLight(TestBaseLight, TestAqualinkDevice):
     def setUp(self) -> None:
         system = MagicMock()
-        data = {}
+        data: Dict[str, str] = {}
         self.sut = AqualinkLight(system, data)
 
     def test_property_is_on_true(self) -> None:
@@ -170,14 +171,14 @@ class TestAqualinkLight(TestBaseLight, TestAqualinkDevice):
 class TestAqualinkThermostat(TestBaseThermostat, TestAqualinkDevice):
     def setUp(self) -> None:
         system = AsyncMock()
-        data = {}
+        data: Dict[str, str] = {}
         self.sut = AqualinkThermostat(system, data)
 
-    async def test_property_is_on_true(self) -> None:
+    def test_property_is_on_true(self) -> None:
         with pytest.raises(NotImplementedError):
             super().test_property_is_on_true()
 
-    async def test_property_is_on_false(self) -> None:
+    def test_property_is_on_false(self) -> None:
         with pytest.raises(NotImplementedError):
             super().test_property_is_on_false()
 

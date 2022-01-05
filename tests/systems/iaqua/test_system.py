@@ -22,16 +22,16 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         pass
 
-    def test_from_data_iaqua(self):
+    def test_from_data_iaqua(self) -> None:
         aqualink = MagicMock()
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         r = AqualinkSystem.from_data(aqualink, data)
         assert r is not None
         assert isinstance(r, IaquaSystem)
 
-    async def test_update_success(self):
+    async def test_update_success(self) -> None:
         aqualink = MagicMock()
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         r = AqualinkSystem.from_data(aqualink, data)
         r._send_home_screen_request = async_noop
         r._send_devices_screen_request = async_noop
@@ -40,18 +40,18 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
         await r.update()
         assert r.online is True
 
-    async def test_update_service_exception(self):
+    async def test_update_service_exception(self) -> None:
         aqualink = MagicMock()
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         r = AqualinkSystem.from_data(aqualink, data)
         r._send_home_screen_request = async_raises(AqualinkServiceException)
         with pytest.raises(AqualinkServiceException):
             await r.update()
         assert r.online is None
 
-    async def test_update_offline(self):
+    async def test_update_offline(self) -> None:
         aqualink = MagicMock()
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         r = AqualinkSystem.from_data(aqualink, data)
         r._send_home_screen_request = async_noop
         r._send_devices_screen_request = async_noop
@@ -63,8 +63,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
             await r.update()
         assert r.online is False
 
-    async def test_parse_devices_offline(self):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_parse_devices_offline(self) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = MagicMock()
         system = AqualinkSystem.from_data(aqualink, data)
 
@@ -76,8 +76,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
             system._parse_devices_response(response)
         assert system.devices == {}
 
-    async def test_parse_devices_good(self):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_parse_devices_good(self) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = MagicMock()
         system = IaquaSystem.from_data(aqualink, data)
 
@@ -119,8 +119,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
         assert system.devices == expected
 
     @patch("httpx.AsyncClient.request")
-    async def test_home_request(self, mock_request):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_home_request(self, mock_request) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = AqualinkClient("user", "pass")
         system = IaquaSystem.from_data(aqualink, data)
 
@@ -129,8 +129,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
         await system._send_home_screen_request()
 
     @patch("httpx.AsyncClient.request")
-    async def test_home_request_unauthorized(self, mock_request):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_home_request_unauthorized(self, mock_request) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = AqualinkClient("user", "pass")
         system = IaquaSystem.from_data(aqualink, data)
 
@@ -140,8 +140,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
             await system._send_home_screen_request()
 
     @patch("httpx.AsyncClient.request")
-    async def test_devices_request(self, mock_request):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_devices_request(self, mock_request) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = AqualinkClient("user", "pass")
         system = IaquaSystem.from_data(aqualink, data)
 
@@ -150,8 +150,8 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
         await system._send_devices_screen_request()
 
     @patch("httpx.AsyncClient.request")
-    async def test_devices_request_unauthorized(self, mock_request):
-        data = {"id": 1, "serial_number": "ABCDEFG", "device_type": "iaqua"}
+    async def test_devices_request_unauthorized(self, mock_request) -> None:
+        data = {"id": "1", "serial_number": "ABCDEFG", "device_type": "iaqua"}
         aqualink = AqualinkClient("user", "pass")
         system = IaquaSystem.from_data(aqualink, data)
 
