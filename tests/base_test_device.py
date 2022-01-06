@@ -16,9 +16,6 @@ from .base import TestBase, dotstar, resp_200
 
 
 class TestBaseDevice(TestBase):
-    def setUp(self) -> None:
-        super().setUp()
-
     def test_property_name(self) -> None:
         assert isinstance(self.sut.name, str)
 

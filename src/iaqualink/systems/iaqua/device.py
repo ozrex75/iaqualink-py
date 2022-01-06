@@ -417,10 +417,10 @@ class IaquaThermostat(IaquaSwitch, AqualinkThermostat):
     def is_on(self) -> bool:
         return self._heater.is_on
 
-    async def turn_on(self) -> bool:
+    async def turn_on(self) -> None:
         if self._heater.is_on is False:
             await self._heater.turn_on()
 
-    async def turn_off(self) -> bool:
+    async def turn_off(self) -> None:
         if self._heater.is_on is True:
             await self._heater.turn_off()
