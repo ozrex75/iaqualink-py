@@ -67,34 +67,15 @@ class AqualinkBinarySensor(AqualinkSensor):
         raise NotImplementedError
 
 
-class AqualinkToggle(AqualinkDevice):
-    @property
-    def is_on(self) -> bool:
-        raise NotImplementedError
-
-    async def turn_on(self) -> None:
-        if not self.is_on:
-            await self.toggle()
-
-    async def turn_off(self) -> None:
-        if self.is_on:
-            await self.toggle()
-
-    async def toggle(self) -> None:
-        raise NotImplementedError()
-
-
-class AqualinkLight(AqualinkDevice):
-    @property
-    def is_on(self) -> bool:
-        raise NotImplementedError
-
+class AqualinkSwitch(AqualinkBinarySensor, AqualinkDevice):
     async def turn_on(self) -> None:
         raise NotImplementedError
 
     async def turn_off(self) -> None:
         raise NotImplementedError
 
+
+class AqualinkLight(AqualinkSwitch, AqualinkDevice):
     @property
     def brightness(self) -> Optional[int]:
         return None
@@ -127,7 +108,7 @@ class AqualinkLight(AqualinkDevice):
         raise AqualinkOperationNotSupportedException
 
 
-class AqualinkThermostat(AqualinkToggle, AqualinkDevice):
+class AqualinkThermostat(AqualinkSwitch, AqualinkDevice):
     @property
     def unit(self) -> str:
         raise NotImplementedError

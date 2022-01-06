@@ -10,8 +10,8 @@ from iaqualink.device import (
     AqualinkDevice,
     AqualinkLight,
     AqualinkSensor,
+    AqualinkSwitch,
     AqualinkThermostat,
-    AqualinkToggle,
 )
 
 from .base_test_device import (
@@ -19,8 +19,8 @@ from .base_test_device import (
     TestBaseDevice,
     TestBaseLight,
     TestBaseSensor,
+    TestBaseSwitch,
     TestBaseThermostat,
-    TestBaseToggle,
 )
 
 
@@ -79,11 +79,11 @@ class TestAqualinkBinarySensor(TestBaseBinarySensor, TestAqualinkSensor):
             super().test_property_is_on_false()
 
 
-class TestAqualinkToggle(TestBaseToggle, TestAqualinkDevice):
+class TestAqualinkSwitch(TestBaseSwitch, TestAqualinkDevice):
     def setUp(self) -> None:
         system = MagicMock()
         data: Dict[str, str] = {}
-        self.sut = AqualinkToggle(system, data)
+        self.sut = AqualinkSwitch(system, data)
 
     def test_property_is_on_true(self) -> None:
         with pytest.raises(NotImplementedError):

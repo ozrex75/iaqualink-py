@@ -7,7 +7,6 @@ import pytest
 import respx
 import respx.router
 
-from iaqualink.client import AqualinkClient
 from iaqualink.exception import (
     AqualinkInvalidParameterException,
     AqualinkOperationNotSupportedException,
@@ -19,9 +18,6 @@ from .base import TestBase, dotstar, resp_200
 class TestBaseDevice(TestBase):
     def setUp(self) -> None:
         super().setUp()
-
-        self.client = AqualinkClient("foo", "bar")
-        self.addAsyncCleanup(self.client.close)
 
     def test_property_name(self) -> None:
         assert isinstance(self.sut.name, str)
@@ -38,6 +34,10 @@ class TestBaseDevice(TestBase):
     def test_property_model(self) -> None:
         assert isinstance(self.sut.model, str)
 
+    def test_from_data(self) -> None:
+        if sut_class := getattr(self, "sut_class", None):
+            assert isinstance(self.sut, sut_class)
+
 
 class TestBaseSensor(TestBaseDevice):
     pass
@@ -51,7 +51,7 @@ class TestBaseBinarySensor(TestBaseSensor):
         assert self.sut.is_on is False
 
 
-class TestBaseToggle(TestBaseBinarySensor):
+class TestBaseSwitch(TestBaseBinarySensor):
     @respx.mock
     async def test_turn_on(self, respx_mock: respx.router.MockRouter) -> None:
         respx_mock.route(dotstar).mock(resp_200)
@@ -83,13 +83,7 @@ class TestBaseToggle(TestBaseBinarySensor):
         assert len(respx_mock.calls) == 0
 
 
-class TestBaseLight(TestBaseBinarySensor):
-    def test_property_is_on_true(self) -> None:
-        assert self.sut.is_on is True
-
-    def test_property_is_on_false(self) -> None:
-        assert self.sut.is_on is False
-
+class TestBaseLight(TestBaseSwitch):
     def test_property_supports_brightness(self) -> None:
         assert isinstance(self.sut.supports_brightness, bool)
 
@@ -107,45 +101,10 @@ class TestBaseLight(TestBaseBinarySensor):
             pytest.skip("Device doesn't support effects")
         assert isinstance(self.sut.effect, str)
 
-    def test_property_effect_name(self) -> None:
-        if not self.sut.supports_effect:
-            pytest.skip("Device doesn't support effects")
-        assert isinstance(self.sut.effect_name, str)
-
     def test_property_supported_effects(self) -> None:
         if not self.sut.supports_effect:
             pytest.skip("Device doesn't support effects")
         assert isinstance(self.sut.supported_effects, dict)
-
-    @respx.mock
-    async def test_turn_on(self, respx_mock: respx.router.MockRouter) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_on()
-        assert len(respx_mock.calls) > 0
-        self.respx_calls = copy.copy(respx_mock.calls)
-
-    @respx.mock
-    async def test_turn_on_noop(
-        self, respx_mock: respx.router.MockRouter
-    ) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_on()
-        assert len(respx_mock.calls) == 0
-
-    @respx.mock
-    async def test_turn_off(self, respx_mock: respx.router.MockRouter) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_off()
-        assert len(respx_mock.calls) > 0
-        self.respx_calls = copy.copy(respx_mock.calls)
-
-    @respx.mock
-    async def test_turn_off_noop(
-        self, respx_mock: respx.router.MockRouter
-    ) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_off()
-        assert len(respx_mock.calls) == 0
 
     @respx.mock
     async def test_set_brightness_75(
@@ -234,11 +193,7 @@ class TestBaseLight(TestBaseBinarySensor):
         assert len(respx_mock.calls) == 0
 
 
-class TestBaseThermostat(TestBaseBinarySensor):
-    def test_from_data(self) -> None:
-        if sut_class := getattr(self, "sut_class", None):
-            assert isinstance(self.sut, sut_class)
-
+class TestBaseThermostat(TestBaseSwitch):
     def test_property_unit_f(self) -> None:
         assert self.sut.unit == "F"
 
@@ -278,36 +233,6 @@ class TestBaseThermostat(TestBaseBinarySensor):
 
     def test_property_target_temperature(self) -> None:
         assert isinstance(self.sut.target_temperature, str)
-
-    @respx.mock
-    async def test_turn_on(self, respx_mock: respx.router.MockRouter) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_on()
-        assert len(respx_mock.calls) > 0
-        self.respx_calls = copy.copy(respx_mock.calls)
-
-    @respx.mock
-    async def test_turn_on_noop(
-        self, respx_mock: respx.router.MockRouter
-    ) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_on()
-        assert len(respx_mock.calls) == 0
-
-    @respx.mock
-    async def test_turn_off(self, respx_mock: respx.router.MockRouter) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_off()
-        assert len(respx_mock.calls) > 0
-        self.respx_calls = copy.copy(respx_mock.calls)
-
-    @respx.mock
-    async def test_turn_off_noop(
-        self, respx_mock: respx.router.MockRouter
-    ) -> None:
-        respx_mock.route(dotstar).mock(resp_200)
-        await self.sut.turn_off()
-        assert len(respx_mock.calls) == 0
 
     @respx.mock
     async def test_set_temperature_86f(

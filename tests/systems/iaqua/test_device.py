@@ -9,14 +9,14 @@ from iaqualink.systems.iaqua.device import (
     IAQUA_TEMP_CELSIUS_LOW,
     IAQUA_TEMP_FAHRENHEIT_HIGH,
     IAQUA_TEMP_FAHRENHEIT_LOW,
-    IaquaAuxToggle,
+    IaquaAuxSwitch,
+    IaquaBinarySensor,
     IaquaColorLight,
     IaquaDevice,
     IaquaDimmableLight,
-    IaquaHeater,
-    IaquaLightToggle,
-    IaquaPump,
+    IaquaLightSwitch,
     IaquaSensor,
+    IaquaSwitch,
     IaquaThermostat,
 )
 from iaqualink.systems.iaqua.system import IaquaSystem
@@ -26,8 +26,8 @@ from ...base_test_device import (
     TestBaseDevice,
     TestBaseLight,
     TestBaseSensor,
+    TestBaseSwitch,
     TestBaseThermostat,
-    TestBaseToggle,
 )
 
 
@@ -66,25 +66,49 @@ class TestIaquaDevice(TestBaseDevice):
         assert self.sut.model == self.sut_class.__name__.replace("Iaqua", "")
 
 
-class TestIaquaSensor(TestBaseSensor, TestIaquaDevice):
+class TestIaquaSensor(TestIaquaDevice, TestBaseSensor):
     def setUp(self) -> None:
         super().setUp()
 
-        data = {"name": "sensor", "state": "42"}
+        data = {"name": "orp", "state": "42"}
         self.sut = IaquaDevice.from_data(self.system, data)
         self.sut_class = IaquaSensor
 
 
-class TestBaseIaquaBinarySensor(TestBaseBinarySensor, TestIaquaSensor):
-    pass
+class TestIaquaBinarySensor(TestIaquaSensor, TestBaseBinarySensor):
+    def setUp(self) -> None:
+        super().setUp()
+
+        data = {"name": "freeze_protection", "state": "0"}
+        self.sut_class = IaquaBinarySensor
+        self.sut = IaquaDevice.from_data(self.system, data)
+
+    def test_property_is_on_false(self) -> None:
+        self.sut.data["state"] = "0"
+        super().test_property_is_on_false()
+        assert self.sut.is_on is False
+
+    def test_property_is_on_true(self) -> None:
+        self.sut.data["state"] = "1"
+        super().test_property_is_on_true()
+        assert self.sut.is_on is True
 
 
-class TestBaseIaquaToggle(TestBaseToggle, TestIaquaDevice):
+class TestIaquaSwitch(TestIaquaBinarySensor, TestBaseSwitch):
+    def setUp(self) -> None:
+        super().setUp()
+
+        data = {
+            "name": "pool_heater",
+            "state": "0",
+        }
+        self.sut = IaquaDevice.from_data(self.system, data)
+        self.sut_class = IaquaSwitch
+
     async def test_turn_on(self) -> None:
         self.sut.data["state"] = "0"
         with patch.object(self.sut.system, "_parse_home_response"):
             await super().test_turn_on()
-        # data = {"aux": "1", "light": "100"}
 
     async def test_turn_on_noop(self) -> None:
         self.sut.data["state"] = "1"
@@ -95,7 +119,6 @@ class TestBaseIaquaToggle(TestBaseToggle, TestIaquaDevice):
         self.sut.data["state"] = "1"
         with patch.object(self.sut.system, "_parse_home_response"):
             await super().test_turn_off()
-        # data = {"aux": "1", "light": "0"}
 
     async def test_turn_off_noop(self) -> None:
         self.sut.data["state"] = "0"
@@ -103,51 +126,7 @@ class TestBaseIaquaToggle(TestBaseToggle, TestIaquaDevice):
             await super().test_turn_off_noop()
 
 
-class TestBaseIaquaAuxDevice(TestIaquaDevice):
-    pass
-
-
-class TestIaquaPump(TestBaseIaquaToggle):
-    def setUp(self) -> None:
-        super().setUp()
-
-        data = {"name": "pool_pump", "state": "1"}
-        self.sut = IaquaDevice.from_data(self.system, data)
-        self.sut_class = IaquaPump
-
-    def test_property_is_on_false(self) -> None:
-        self.sut.data["state"] = "0"
-        super().test_property_is_on_false()
-        assert self.sut.is_on is False
-
-    def test_property_is_on_true(self) -> None:
-        self.sut.data["state"] = "1"
-        super().test_property_is_on_true()
-        assert self.sut.is_on is True
-
-
-class TestIaquaHeater(TestBaseIaquaToggle, TestBaseDevice):
-    def setUp(self) -> None:
-        super().setUp()
-
-        data = {"name": "pool_heater", "state": "0"}
-        self.sut = IaquaDevice.from_data(self.system, data)
-        self.sut_class = IaquaHeater
-
-    def test_property_is_on_false(self) -> None:
-        self.sut.data["state"] = "0"
-        super().test_property_is_on_false()
-        assert self.sut.is_on is False
-
-    def test_property_is_on_true(self) -> None:
-        self.sut.data["state"] = "1"
-        super().test_property_is_on_true()
-        assert self.sut.is_on is True
-
-
-class TestIaquaAuxToggle(
-    TestBaseToggle, TestBaseIaquaAuxDevice, TestIaquaDevice
-):
+class TestIaquaAuxSwitch(TestIaquaSwitch, TestBaseSwitch):
     def setUp(self) -> None:
         super().setUp()
 
@@ -159,23 +138,12 @@ class TestIaquaAuxToggle(
             "label": "CLEANER",
         }
         self.sut = IaquaDevice.from_data(self.system, data)
-        self.sut_class = IaquaAuxToggle
-
-    def test_property_is_on_false(self) -> None:
-        self.sut.data["state"] = "0"
-        super().test_property_is_on_false()
-        assert self.sut.is_on is False
-
-    def test_property_is_on_true(self) -> None:
-        self.sut.data["state"] = "1"
-        super().test_property_is_on_true()
-        assert self.sut.is_on is True
+        self.sut_class = IaquaAuxSwitch
 
     async def test_turn_on(self) -> None:
         self.sut.data["state"] = "0"
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_on()
-        # data = {"aux": "1", "light": "100"}
 
     async def test_turn_on_noop(self) -> None:
         self.sut.data["state"] = "1"
@@ -186,7 +154,6 @@ class TestIaquaAuxToggle(
         self.sut.data["state"] = "1"
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_off()
-        # data = {"aux": "1", "light": "0"}
 
     async def test_turn_off_noop(self) -> None:
         self.sut.data["state"] = "0"
@@ -194,7 +161,7 @@ class TestIaquaAuxToggle(
             await super().test_turn_off_noop()
 
 
-class TestIaquaLightToggle(TestBaseLight, TestIaquaDevice):
+class TestIaquaLightSwitch(TestIaquaAuxSwitch, TestBaseLight):
     def setUp(self) -> None:
         super().setUp()
 
@@ -207,39 +174,7 @@ class TestIaquaLightToggle(TestBaseLight, TestIaquaDevice):
             "type": "0",
         }
         self.sut = IaquaDevice.from_data(self.system, data)
-        self.sut_class = IaquaLightToggle
-
-    def test_property_is_on_false(self) -> None:
-        self.sut.data["state"] = "0"
-        super().test_property_is_on_false()
-        assert self.sut.is_on is False
-
-    def test_property_is_on_true(self) -> None:
-        self.sut.data["state"] = "1"
-        super().test_property_is_on_true()
-        assert self.sut.is_on is True
-
-    async def test_turn_on(self) -> None:
-        self.sut.data["state"] = "0"
-        with patch.object(self.sut.system, "_parse_devices_response"):
-            await super().test_turn_on()
-        # data = {"aux": "1", "light": "100"}
-
-    async def test_turn_on_noop(self) -> None:
-        self.sut.data["state"] = "1"
-        with patch.object(self.sut.system, "_parse_devices_response"):
-            await super().test_turn_on_noop()
-
-    async def test_turn_off(self) -> None:
-        self.sut.data["state"] = "1"
-        with patch.object(self.sut.system, "_parse_devices_response"):
-            await super().test_turn_off()
-        # data = {"aux": "1", "light": "0"}
-
-    async def test_turn_off_noop(self) -> None:
-        self.sut.data["state"] = "0"
-        with patch.object(self.sut.system, "_parse_devices_response"):
-            await super().test_turn_off_noop()
+        self.sut_class = IaquaLightSwitch
 
     def test_property_brightness(self) -> None:
         assert self.sut.brightness is None
@@ -248,11 +183,10 @@ class TestIaquaLightToggle(TestBaseLight, TestIaquaDevice):
         assert self.sut.effect is None
 
 
-class TestIaquaDimmableLight(TestBaseLight, TestIaquaDevice):
+class TestIaquaDimmableLight(TestIaquaAuxSwitch, TestBaseLight):
     def setUp(self) -> None:
         super().setUp()
 
-        # system.set_light = async_noop
         data = {
             "name": "aux_1",
             "state": "1",
@@ -284,7 +218,7 @@ class TestIaquaDimmableLight(TestBaseLight, TestIaquaDevice):
 
     def test_property_is_on_true(self) -> None:
         self.sut.data["state"] = "1"
-        self.sut.data["subtype"] = "50"
+        self.sut.data["subtype"] = "100"
         super().test_property_is_on_true()
         assert self.sut.is_on is True
 
@@ -293,11 +227,10 @@ class TestIaquaDimmableLight(TestBaseLight, TestIaquaDevice):
         self.sut.data["subtype"] = "0"
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_on()
-        # data = {"aux": "1", "light": "100"}
 
     async def test_turn_on_noop(self) -> None:
         self.sut.data["state"] = "1"
-        self.sut.data["subtype"] = "100"
+        self.sut.data["subtype"] = "25"
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_on_noop()
 
@@ -306,7 +239,6 @@ class TestIaquaDimmableLight(TestBaseLight, TestIaquaDevice):
         self.sut.data["subtype"] = "100"
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_off()
-        # data = {"aux": "1", "light": "0"}
 
     async def test_turn_off_noop(self) -> None:
         self.sut.data["state"] = "0"
@@ -325,10 +257,9 @@ class TestIaquaDimmableLight(TestBaseLight, TestIaquaDevice):
     async def test_set_brightness_75(self) -> None:
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_set_brightness_75()
-        # data = {"aux": "1", "light": "75"}
 
 
-class TestIaquaColorLight(TestBaseLight, TestIaquaDevice):
+class TestIaquaColorLight(TestIaquaAuxSwitch, TestBaseLight):
     def setUp(self) -> None:
         super().setUp()
 
@@ -369,18 +300,6 @@ class TestIaquaColorLight(TestBaseLight, TestIaquaDevice):
         super().test_property_supports_effect()
         assert self.sut.supports_effect is True
 
-    def test_property_is_on_false(self) -> None:
-        self.sut.data["state"] = "0"
-        super().test_property_is_on_false()
-
-    def test_property_is_on_true(self) -> None:
-        self.sut.data["state"] = "1"
-        super().test_property_is_on_true()
-
-    async def test_turn_off_noop(self) -> None:
-        self.sut.data["state"] = "0"
-        await super().test_turn_off_noop()
-
     async def test_turn_off(self) -> None:
         self.sut.data["state"] = "1"
         with patch.object(self.sut.system, "_parse_devices_response"):
@@ -392,10 +311,6 @@ class TestIaquaColorLight(TestBaseLight, TestIaquaDevice):
         with patch.object(self.sut.system, "_parse_devices_response"):
             await super().test_turn_on()
         # data = {"aux": "1", "light": "1", "subtype": "5"}
-
-    async def test_turn_on_noop(self) -> None:
-        self.sut.data["state"] = "1"
-        await super().test_turn_on_noop()
 
     async def test_set_effect_by_id_4(self) -> None:
         with patch.object(self.sut.system, "_parse_devices_response"):

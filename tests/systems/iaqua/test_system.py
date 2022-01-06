@@ -12,7 +12,7 @@ from iaqualink.exception import (
     AqualinkSystemOfflineException,
 )
 from iaqualink.system import AqualinkSystem
-from iaqualink.systems.iaqua.device import IaquaAuxToggle
+from iaqualink.systems.iaqua.device import IaquaAuxSwitch
 from iaqualink.systems.iaqua.system import IaquaSystem
 
 from ...common import async_noop, async_raises
@@ -102,7 +102,7 @@ class TestIaquaSystem(unittest.IsolatedAsyncioTestCase):
         response.json.return_value = message
 
         expected = {
-            "aux_B1": IaquaAuxToggle(
+            "aux_B1": IaquaAuxSwitch(
                 system=system,
                 data={
                     "aux": "B1",
