@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import copy
-import unittest
 from unittest.mock import PropertyMock, patch
 
-import httpx
 import pytest
 import respx
-from respx.patterns import M
 import respx.router
 
 from iaqualink.client import AqualinkClient
@@ -16,21 +13,13 @@ from iaqualink.exception import (
     AqualinkOperationNotSupportedException,
 )
 
-dotstar = M(host__regex=".*")
-resp_200 = httpx.Response(status_code=200)
+from .base import TestBase, dotstar, resp_200
 
 
-class TestBaseDevice(unittest.IsolatedAsyncioTestCase):
-    __test__ = False
-
-    def __init_subclass__(cls) -> None:
-        if cls.__name__.startswith("TestBase"):
-            setattr(cls, "__test__", False)
-        else:
-            setattr(cls, "__test__", True)
-        return super().__init_subclass__()
-
+class TestBaseDevice(TestBase):
     def setUp(self) -> None:
+        super().setUp()
+
         self.client = AqualinkClient("foo", "bar")
         self.addAsyncCleanup(self.client.close)
 
