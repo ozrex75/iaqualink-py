@@ -6,7 +6,7 @@ from respx.patterns import M
 from iaqualink.client import AqualinkClient
 
 dotstar = M(host__regex=".*")
-resp_200 = httpx.Response(status_code=200)
+resp_200 = httpx.Response(status_code=200, json={})
 
 
 class TestBase(unittest.IsolatedAsyncioTestCase):
